@@ -1,30 +1,3 @@
-{{-- 
-    Smooth Interact.js Form Builder
-
-    This Blade template provides a drag-and-drop form builder interface using Interact.js and Bootstrap 5.
-    Users can drag field types from a toolbox into a form area, reposition, and resize them.
-    Features:
-    - Toolbox with various field types (text, textarea, select, checkbox, radio, button, date, file).
-    - Drag fields from toolbox to form area with ghost preview.
-    - Fields are draggable and resizable within the form area.
-    - Each field includes a delete handle for removal.
-    - "Save Form JSON" button outputs the current form layout as JSON.
-    - "Clear Form" button removes all fields from the form area.
-    - Responsive layout using Bootstrap grid.
-    - Custom styles for smooth UX.
-
-    Key JavaScript Functions:
-    - fieldMarkup(type): Returns HTML markup for each field type.
-    - createField(type, left, top): Creates a draggable, resizable field at specified position.
-    - Interact.js handles drag, drop, and resize interactions.
-    - Save and clear actions manage the form state and output.
-
-    Usage:
-    - Drag items from the toolbox into the form area.
-    - Move and resize fields as needed.
-    - Save or clear the form using provided buttons.
-
---}}
 <!doctype html>
 <html lang="en">
 
@@ -168,12 +141,14 @@
 
     <script>
         function fieldMarkup(type) {
+            
+        // console.log(type);   
             if (type === 'text')
                 return '<label class="form-label" contenteditable="true">Text Input</label><input type="text" class="form-control" placeholder="Text">'
 
             if (type === 'textarea')
+                // console.log(type);
                 return '<label class="form-label" contenteditable="true">Textarea</label><textarea class="form-control" placeholder="Textarea"></textarea>'
-
             if (type === 'select')
                 return '<label class="form-label" contenteditable="true">Dropdown</label><select class="form-select"><option>Option 1</option><option>Option 2</option></select>'
 
@@ -182,6 +157,7 @@
                     '"><label class="form-check-label" contenteditable="true">Checkbox</label></div>'
 
             if (type === 'radio')
+            // console.log(type);
                 return '<div class="form-check"><input class="form-check-input" type="radio" id="rd_' + Date.now() +
                     '" name="radioGroup"><label class="form-check-label" contenteditable="true">Radio</label></div>'
 
@@ -202,7 +178,7 @@
 
             if (type === 'paragraph')
                 return '<p contenteditable="true">Form description goes here...</p>'
-
+                    // console.log(type);
             return '<div>Unknown</div>'
         }
         let ghost = null
@@ -221,10 +197,13 @@
                     document.body.appendChild(ghost)
                 },
                 move(event) {
+                        // console.log(ghost);
+                    // const target = event.ghost
                     const target = event.target
+                    // console.log(target);
                     const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
                     const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
-
+                        // console.log(y);
                     target.style.transform = `translate(${x}px, ${y}px)`
                     target.setAttribute('data-x', x)
                     target.setAttribute('data-y', y)
@@ -235,10 +214,11 @@
                     }
                 },
                 end(event) {
-
+                    // MATH.rand();
+                    // console.log(event);
                     if (ghost) ghost.remove()
                     ghost = null
-                    // revert visual transform so toolbox item returns to its place
+
                     event.target.style.transform = ''
                     event.target.removeAttribute('data-x')
                     event.target.removeAttribute('data-y')
@@ -246,41 +226,40 @@
             }
         })
 
-        // --- Form area dropzone ---
+
         interact('#form-area').dropzone({
             accept: '.toolbox-item',
             overlap: 0.25,
             ondrop(event) {
+                // console.log(event);
+                // if (ghost) ghost.remove()
                 const type = event.relatedTarget.dataset.type
                 const container = event.target
                 const containerRect = container.getBoundingClientRect()
-
-                // Pointer position at drop time
                 const pageX = event.dragEvent.clientX
                 const pageY = event.dragEvent.clientY
-
-                // Position relative to container
                 const left = Math.max(0, pageX - containerRect.left)
                 const top = Math.max(0, pageY - containerRect.top)
-
+                // 
+                // console.log(type, left, top);
                 createField(type, left, top)
             }
         })
 
-        // --- Create field inside form-area ---
         function createField(type, left, top) {
+            // console.log(type, left, top);
             const container = document.getElementById('form-area')
-
+            // console.log(container);
             const field = document.createElement('div')
             field.className = 'field'
             field.dataset.type = type
-            field.style.left = (left - 20) + 'px' // offset so cursor is near center
+            field.style.left = (left - 20) + 'px'
             field.style.top = (top - 20) + 'px'
             field.style.width = '220px'
             field.style.height = '60px'
             field.innerHTML = fieldMarkup(type)
 
-            // delete handle
+            // console.log(fieldMarkup(type));
             const del = document.createElement('div')
             del.className = 'delete-handle'
             del.innerHTML = '×'
@@ -289,11 +268,12 @@
                 e.stopPropagation();
                 field.remove()
             })
+            // console.log(del);
             field.appendChild(del)
 
             container.appendChild(field)
 
-            // Make it draggable inside parent by adjusting left/top directly
+
             interact(field).draggable({
                 inertia: true,
                 modifiers: [
@@ -302,6 +282,10 @@
                         endOnly: true
                     })
                 ],
+                //  console.log(interact.modifiers.restrictRect({
+                //         restriction: 'parent',
+                //         endOnly: true
+                //     }));
                 listeners: {
                     move(event) {
                         const target = event.target
@@ -313,7 +297,7 @@
                 }
             })
 
-            // Make it resizable and keep it inside parent
+
             interact(field).resizable({
                 edges: {
                     left: true,
@@ -336,13 +320,12 @@
                     move(event) {
                         const target = event.target
 
-                        // update size
                         target.style.width = event.rect.width + 'px'
                         target.style.height = event.rect.height + 'px'
-
-                        // update position if top/left edges were moved
+                        // console.log(target)
                         const left = (parseFloat(target.style.left) || 0) + event.deltaRect.left
                         const top = (parseFloat(target.style.top) || 0) + event.deltaRect.top
+                        // console.log(parseFloat(el.style.height));
                         target.style.left = left + 'px'
                         target.style.top = top + 'px'
                     }
@@ -350,7 +333,6 @@
             })
         }
 
-        // --- Save form JSON ---
         document.getElementById('saveForm').addEventListener('click', () => {
             const list = []
             document.querySelectorAll('#form-area .field').forEach(el => {
@@ -365,13 +347,16 @@
                         null
                 })
             })
+            // console.log(list);
             document.getElementById('output').textContent = JSON.stringify(list, null, 2)
         })
 
-        // --- Clear form ---
+
         document.getElementById('clearForm').addEventListener('click', () => {
             document.querySelectorAll('#form-area .field').forEach(el => el.remove())
             document.getElementById('output').textContent = ''
+            // console.log();
+            // parseFloat(el.style.top)
         })
 
 
@@ -389,6 +374,7 @@
                         el.querySelector('[contenteditable]').innerText :
                         null
                 })
+                //  document.getElementById('output').textContent = ''
             })
 
             fetch('{{ route('forms.formstore') }}', {
